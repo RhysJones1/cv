@@ -18,3 +18,23 @@
     <a href="index.html">Go Home</a> 
 </body>
 </html>
+
+def self.retrieve_value(iep_vehicle:, key:, parents: [])
+    value = nil
+    parents.each do |parent|
+      value = iep_vehicle.dig(parent, key)
+      break if value
+    end
+
+    puts "Retrieved value for key #{key} with parents #{parents}: #{value.inspect}"
+    value
+  end
+end
+
+def self.map_expected_mongo_value(iep_vehicle:, key:)
+    iep_value = if key.eql?(:start0)
+                  IepData.retrieve_value(iep_vehicle:, key:, parent: IepDB::TABLES[:declared_off_road])
+                else
+                  IepData.retrieve_value(iep_vehicle:, key:)
+                end
+
