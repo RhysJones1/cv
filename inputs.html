@@ -19,22 +19,51 @@
 </body>
 </html>
 
-def self.retrieve_value(iep_vehicle:, key:, parents: [])
-    value = nil
-    parents.each do |parent|
-      value = iep_vehicle.dig(parent, key)
-      break if value
-    end
+Then(/^the vehicle will have the attribute '(.*)' with a value of '(.*)'$/) do |attribute, value|
+  puts artefacts.mongo_vehicle.keys
+  actual_attribute = artefacts.mongo_vehicle.deep_find(key: attribute)
+  binding.pry
+  expect(actual_attribute).not_to be(nil), "Key '#{attribute}' not found in MongoDB vehicle data".red
 
-    puts "Retrieved value for key #{key} with parents #{parents}: #{value.inspect}"
-    value
-  end
+  actual_value = actual_attribute.first
+  expected_value = MongoData.set_expected_attribute_value(value)
+
+  expect(actual_value).to eq(expected_value)
 end
 
-def self.map_expected_mongo_value(iep_vehicle:, key:)
-    iep_value = if key.eql?(:start0)
-                  IepData.retrieve_value(iep_vehicle:, key:, parent: IepDB::TABLES[:declared_off_road])
-                else
-                  IepData.retrieve_value(iep_vehicle:, key:)
-                end
-
+=> {"_id"=>"NI95CBC",
+ "artStartDate"=>2019-01-22 00:00:00 UTC,
+ "v5c"=>"1111",
+ "artEndDate"=>2019-01-23 00:00:00 UTC,
+ "co2Emissions"=>173,
+ "engineCapacity"=>2916,
+ "dateOfFirstRegistration"=>2019-02-23 00:00:00 UTC,
+ "dateOfOrigRegistration"=>2019-02-22 00:00:00 UTC,
+ "euroStatus"=>"EURO6",
+ "euroStatusCode"=>"EURO9",
+ "markedAsScrapped"=>false,
+ "markedForExport"=>false,
+ "fuelType"=>"GAS BI-FUEL",
+ "motExpiry"=>2020-09-30 00:00:00 UTC,
+ "revenueWeight"=>1189,
+ "lastLicencingType"=>"S",
+ "colour"=>"GREY",
+ "typeApproval"=>"V8",
+ "wheelPlan"=>"2 AXLE RIGID BODY",
+ "wheelPlanCode"=>"C",
+ "dateOfManufacture"=>2019-02-26 00:00:00 UTC,
+ "dateOfLiability"=>2019-03-25 00:00:00 UTC,
+ "taxClassCode"=>"42",
+ "dateOfLastV5CIssued"=>2020-09-30 00:00:00 UTC,
+ "dateProcessed"=>2024-09-13 10:39:34.131 UTC,
+ "bodyTypeCode"=>"37",
+ "seatingCount"=>3,
+ "rfsApplied"=>true,
+ "trailerWeight"=>240,
+ "vehiclePrice"=>"64453.52",
+ "realDrivingEmissions"=>"1",
+ "typeApprovalNumber"=>"RH1",
+ "unladenWeight"=>178,
+ "wheelBase"=>1832,
+ "automatedVehicle"=>true,
+ "sornStart"=>2019-02-23 00:00:00 UTC}
