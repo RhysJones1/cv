@@ -18,3 +18,134 @@
     <a href="index.html">Go Home</a> 
 </body>
 </html>
+
+
+package uk.gov.dvla.osl.etl.service;
+
+
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import uk.gov.dvla.osl.etl.common.service.ReferenceDataService;
+import uk.gov.dvla.osl.etl.common.utils.ActivityLogger;
+import uk.gov.dvla.osl.etl.extract.mappers.ModelMapper;
+import uk.gov.dvla.osl.etl.extract.mappers.PropulsionTypeMapper;
+import uk.gov.dvla.osl.etl.extract.mappers.ReferenceDataMapper;
+import uk.gov.dvla.osl.etl.extract.repo.*;
+import uk.gov.dvla.osl.etl.load.repo.*;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+public class ReferenceDataServiceTest {
+    @Mock
+    private ExtractColourRepo extractColourRepo;
+    @Mock
+    private ExtractBodyTypeRepo extractBodyTypeRepo;
+    @Mock
+    private ExtractMakeRepo extractMakeRepo;
+    @Mock
+    private ExtractModelRepo extractModelRepo;
+    @Mock
+    private ExtractPropulsionTypeRepo extractPropulsionTypeRepo;
+    @Mock
+    private ExtractTaxClassRepo extractTaxClassRepo;
+    @Mock
+    private ExtractWheelplanRepo extractWheelplanRepo;
+    @Mock
+
+    private LoadColourRepo loadColourRepo;
+    @Mock
+    private LoadBodyTypeRepo loadBodyTypeRepo;
+    @Mock
+    private LoadMakeRepo loadMakeRepo;
+    @Mock
+    private LoadModelRepo loadModelRepo;
+    @Mock
+    private LoadPropulsionTypeRepo loadPropulsionTypeRepo;
+    @Mock
+    private LoadTaxClassRepo loadTaxClassRepo;
+    @Mock
+    private LoadWheelplanRepo loadWheelplanRepo;
+    @Mock
+    private LoadUpdateHistoryRepo loadUpdateHistoryRepo;
+    @Mock
+    private ReferenceDataMapper referenceDataMapper;
+    @Mock
+    private PropulsionTypeMapper propulsionTypeMapper;
+    @Mock
+    private ModelMapper modelMapper;
+
+    @Mock
+    private ActivityLogger activityLogger;
+
+    @InjectMocks
+    private ReferenceDataService referenceDataService;
+
+    @BeforeEach
+    void setUp(){
+        MockitoAnnotations.openMocks(this);
+    }
+
+    @Test
+    void testReferenceDataServiceInstantiation(){
+        assertNotNull(referenceDataService);
+    }
+
+    @Test
+    void testProcessColour(){
+
+    }
+
+
+    private void processColour() {
+        loadColourRepo.saveAll(
+                extractColourRepo.findAll().stream()
+                        .map(referenceDataMapper::mapReferenceData)
+                        .map(ColourDocument::new)
+                        .collect(Collectors.toList())
+        );
+        loadUpdateHistoryRepo.save(new UpdateHistoryDocument(ReferenceDataType.COLOUR));
+        activityLogger.logComplete(ReferenceDataType.COLOUR.getValue());
+    }
+
+package uk.gov.dvla.osl.etl.load.documents;
+
+import org.springframework.data.mongodb.core.mapping.Document;
+import uk.gov.dvla.osl.etl.extract.models.ReferenceDataModel;
+
+@Document(collection = "colour")
+public class ColourDocument extends ReferenceDataDocument {
+    public ColourDocument(ReferenceDataModel model) {
+        super(model);
+    }
+}
+
+package uk.gov.dvla.osl.etl.extract.models;
+
+import lombok.Data;
+import javax.persistence.Id;
+import javax.persistence.MappedSuperclass;
+
+@MappedSuperclass
+@Data
+public abstract class ReferenceDataModel {
+    @Id
+    private String code;
+
+    private String description;
+}
+
+package uk.gov.dvla.osl.etl.extract.models;
+
+import javax.persistence.Entity;
+import javax.persistence.Table;
+
+@Entity
+@Table(name = "COLOUR")
+public class ColourModel extends ReferenceDataModel {
+}
+
+
