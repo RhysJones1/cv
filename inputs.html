@@ -1,3 +1,28 @@
+@Test
+void testProcessModel() {
+    // Given: Mock some ModelModel data from the DB
+    MockCollectionData mockCollectionData = new MockCollectionData();
+    List<ModelModel> mockModel = mockCollectionData.getMockModel();
+
+    // Mock the behavior of extractModelRepo
+    when(extractModelRepo.findAll()).thenReturn(mockModel);
+
+    // Corrected: Mock the behavior of modelMapper
+    when(modelMapper.mapModel(any(ModelModel.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+    // When: Calling the processModel method
+    referenceDataService.processModel();
+
+    // Then: Verify interactions
+    verify(loadModelRepo).saveAll(anyList());
+    verify(loadUpdateHistoryRepo).save(any(UpdateHistoryDocument.class));
+    verify(activityLogger).logComplete(ReferenceDataType.MODEL.getValue());
+}
+
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
