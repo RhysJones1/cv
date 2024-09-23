@@ -21,3 +21,130 @@
 </html>
 
 
+ @Test
+    void testProcessPropulsionType() {
+        // Given: Mock some PropulsionTypeModel data from the DB
+        MockCollectionData mockCollectionData = new MockCollectionData();
+        List<PropulsionTypeModel> mockPropulsionType = mockCollectionData.getMockPropulsionType();
+
+        // Mock the behavior of extractPropulsionTypeRepo
+        when(extractPropulsionTypeRepo.findAll()).thenReturn(mockPropulsionType);
+
+        // Mock the behavior of modelMapper
+        when(modelMapper.mapModel(any(ModelModel.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        // When: Calling the processPropulsionType method
+        referenceDataService.processPropulsionType();
+
+        // Then: Verify interactions
+        verify(loadPropulsionTypeRepo).saveAll(anyList());
+        verify(loadUpdateHistoryRepo).save(any(UpdateHistoryDocument.class));
+        verify(activityLogger).logComplete(ReferenceDataType.PROPULSION_TYPE.getValue());
+    }
+
+java.lang.NullPointerException 
+
+public void processPropulsionType() {
+        loadPropulsionTypeRepo.saveAll(
+                extractPropulsionTypeRepo.findAll().stream()
+                        .map(propulsionTypeMapper::mapPropulsionType)
+                        .map(referenceDataMapper::mapReferenceData)
+                        .map(PropulsionTypeDocument::new)
+                        .collect(Collectors.toList())
+        );
+        loadUpdateHistoryRepo.save(new UpdateHistoryDocument(ReferenceDataType.PROPULSION_TYPE));
+        activityLogger.logComplete(ReferenceDataType.PROPULSION_TYPE.getValue());
+    }
+
+package uk.gov.dvla.osl.etl.extract.mappers;
+
+import org.springframework.stereotype.Component;
+import uk.gov.dvla.osl.etl.extract.models.PropulsionTypeModel;
+
+import static uk.gov.dvla.osl.etl.common.Constants.DIESEL_PROPULSION_TYPE_DESCRIPTION;
+import static uk.gov.dvla.osl.etl.common.Constants.HEAVY_OIL_PROPULSION_TYPE_CODE;
+
+@Component
+public class PropulsionTypeMapper {
+    public PropulsionTypeModel mapPropulsionType (PropulsionTypeModel propulsionTypeModel) {
+        if (propulsionTypeModel.getCode().trim().equals(HEAVY_OIL_PROPULSION_TYPE_CODE)) {
+            propulsionTypeModel.setDescription(DIESEL_PROPULSION_TYPE_DESCRIPTION);
+        }
+
+        return propulsionTypeModel;
+    }
+}
+
+package uk.gov.dvla.osl.etl.extract.models;
+
+import javax.persistence.Entity;
+import javax.persistence.Table;
+
+@Entity
+@Table(name = "PROPULSION_TYPE")
+public class PropulsionTypeModel extends ReferenceDataModel {
+}
+
+package uk.gov.dvla.osl.etl.extract.models;
+
+import lombok.Data;
+import javax.persistence.Id;
+import javax.persistence.MappedSuperclass;
+
+@MappedSuperclass
+@Data
+public abstract class ReferenceDataModel {
+    @Id
+    private String code;
+
+    private String description;
+}
+
+package uk.gov.dvla.osl.etl.load.documents;
+
+import org.springframework.data.mongodb.core.mapping.Document;
+import uk.gov.dvla.osl.etl.extract.models.ReferenceDataModel;
+
+@Document(collection = "propulsionType")
+public class PropulsionTypeDocument extends ReferenceDataDocument {
+    public PropulsionTypeDocument(ReferenceDataModel model) {
+        super(model);
+    }
+}
+
+
+package uk.gov.dvla.osl.etl.load.documents;
+
+import lombok.Data;
+import org.springframework.data.mongodb.core.mapping.MongoId;
+import uk.gov.dvla.osl.etl.extract.models.ReferenceDataModel;
+
+import javax.persistence.Id;
+import javax.persistence.MappedSuperclass;
+
+@MappedSuperclass
+@Data
+public abstract class ReferenceDataDocument {
+    @Id
+    @MongoId
+    private String code;
+    private String description;
+
+    public ReferenceDataDocument(ReferenceDataModel model) {
+        this.code = model.getCode();
+        this.description = model.getDescription();
+    }
+}
+ public List<PropulsionTypeModel> getMockPropulsionType(){
+        return Arrays.asList(
+                new PropulsionTypeModel(){{
+                    setCode("01");
+                    setDescription("Petrol");
+                }},
+                new PropulsionTypeModel(){{
+                    setCode("02");
+                    setDescription("Diesel");
+                }}
+        );
+    }
