@@ -1,3 +1,58 @@
+@ExtendWith(MockitoExtension.class)
+public class YourTestClass {
+
+    @Mock
+    private LoadPropulsionTypeRepo loadPropulsionTypeRepo;
+
+    @Mock
+    private ExtractPropulsionTypeRepo extractPropulsionTypeRepo;
+
+    @Mock
+    private ModelMapper modelMapper;
+
+    @Mock
+    private PropulsionTypeMapper propulsionTypeMapper;  // Ensure this is mocked
+
+    @Mock
+    private ReferenceDataMapper referenceDataMapper;    // Ensure this is mocked
+
+    @Mock
+    private LoadUpdateHistoryRepo loadUpdateHistoryRepo;
+
+    @Mock
+    private ActivityLogger activityLogger;
+
+    @InjectMocks
+    private ReferenceDataService referenceDataService;
+
+    @Test
+    void testProcessPropulsionType() {
+        // Given: Mock some PropulsionTypeModel data from the DB
+        MockCollectionData mockCollectionData = new MockCollectionData();
+        List<PropulsionTypeModel> mockPropulsionType = mockCollectionData.getMockPropulsionType();
+
+        // Mock the behavior of extractPropulsionTypeRepo
+        when(extractPropulsionTypeRepo.findAll()).thenReturn(mockPropulsionType);
+
+        // Mock the behavior of propulsionTypeMapper and referenceDataMapper
+        when(propulsionTypeMapper.mapPropulsionType(any(PropulsionTypeModel.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0)); // Return as is for simplicity
+
+        when(referenceDataMapper.mapReferenceData(any(PropulsionTypeModel.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0)); // Return as is for simplicity
+
+        // When: Calling the processPropulsionType method
+        referenceDataService.processPropulsionType();
+
+        // Then: Verify interactions
+        verify(loadPropulsionTypeRepo).saveAll(anyList());
+        verify(loadUpdateHistoryRepo).save(any(UpdateHistoryDocument.class));
+        verify(activityLogger).logComplete(ReferenceDataType.PROPULSION_TYPE.getValue());
+    }
+}
+
+
+
 
 <!DOCTYPE html>
 <html lang="en">
